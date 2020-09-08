@@ -1,17 +1,16 @@
 from kivy.app import App
 from kivy.graphics import *
-from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.behaviors import ButtonBehavior, ToggleButtonBehavior
 from kivy.uix.image import Image
-from kivy.uix.widget import Widget
+from kivy.uix.spinner import Spinner
+from kivy.uix.stencilview import StencilView
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.uix.dropdown import DropDown
 from kivy.core.window import Window
 
 Window.clearcolor = (1, 1, 1, 1)
 
 
-class Screen(Widget):
+class DrawingSpace(StencilView):
     _prev_x = None
     _prev_y = None
     brush_color = (0, 0, 0)
@@ -21,7 +20,7 @@ class Screen(Widget):
         super().__init__(**kwargs)
 
     def on_touch_move(self, touch):
-        if super(Screen, self).on_touch_move(touch):
+        if super(DrawingSpace, self).on_touch_move(touch):
             return True
         if not self.collide_point(touch.x, touch.y):
             return False
@@ -33,7 +32,7 @@ class Screen(Widget):
         return True
 
     def on_touch_up(self, touch):
-        if super(Screen, self).on_touch_up(touch):
+        if super(DrawingSpace, self).on_touch_up(touch):
             return True
         if not self.collide_point(touch.x, touch.y):
             return False
@@ -41,36 +40,65 @@ class Screen(Widget):
         return True
 
 
-class IconButton(ButtonBehavior, Image):
-    pass
+class IconButton(ToggleButtonBehavior, Image):
+    def __init__(self, **kwargs):
+        super(IconButton, self).__init__(**kwargs)
+
+    def on_state(self, widget, value):
+        if value == 'down':
+            self.color = [1, 0, 0, 1]
+        else:
+            self.color = [1, 1, 0, 1]
 
 
 class DrawingApp(App):
-    colors = {'Red': (1, 0, 0), "Blue": (0, 0, 1), "Green": (0, 1, 0)}
+    colors = {'Red': (1, 0, 0), 'Blue': (0, 0, 1), 'Green': (0, 1, 0), 'Black': (0, 0, 0)}
 
     def build(self):
         main_layout = BoxLayout(spacing=10, orientation='vertical')
-        controls_layout = BoxLayout(spacing=1, orientation='horizontal', size_hint=(1, .07))
-        screen = Screen(size_hint=(1, 1))
+        controls_layout = BoxLayout(spacing=5, orientation='horizontal', size_hint=(1, .07))
+        screen = DrawingSpace(size_hint=(1, 1))
 
-        dropdown = DropDown()
-        for color, rgb in self.colors.items():
-            rgb = list(rgb) + [1]
-            btn = Button(text=color, color=rgb, size_hint_y=None, height=44)
-            btn.bind(on_release=lambda btn: dropdown.select(btn.text))
-            dropdown.add_widget(btn)
+        colors_selector = self.build_color_dropdown(screen)
+        size_selector = self.build_size_dropdown(screen)
 
-        main_button = IconButton(source="res/color_wheel.png")
-        main_button.bind(on_release=dropdown.open)
-
-        dropdown.bind(on_select=lambda instance, x: setattr(screen, 'brush_color', self.colors.get(x)))
-
-        controls_layout.add_widget(main_button)
+        controls_layout.add_widget(IconButton(source="res/brush.png", group="tools"))
+        controls_layout.add_widget(IconButton(source="res/eraser.png", group="tools"))
+        controls_layout.add_widget(colors_selector)
+        controls_layout.add_widget(size_selector)
 
         main_layout.add_widget(controls_layout)
         main_layout.add_widget(screen)
 
         return main_layout
+
+    def build_size_dropdown(self, screen):
+        spinner = Spinner(
+            text='5',
+            values=tuple([str(i) for i in range(1, 11)]),
+            size_hint=(None, None),
+            size=(100, 44),
+            pos_hint={'center_x': .5, 'center_y': .5})
+
+        def show_selected_value(spinner, text):
+            screen.brush_size = int(text)
+
+        spinner.bind(text=show_selected_value)
+        return spinner
+
+    def build_color_dropdown(self, screen):
+        spinner = Spinner(
+            text='Black',
+            values=tuple([color for color in self.colors]),
+            size_hint=(None, None),
+            size=(100, 44),
+            pos_hint={'center_x': .5, 'center_y': .5})
+
+        def show_selected_value(spinner, text):
+            screen.brush_color = self.colors[text]
+
+        spinner.bind(text=show_selected_value)
+        return spinner
 
 
 if __name__ == '__main__':
