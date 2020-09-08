@@ -52,10 +52,10 @@ class IconButton(ToggleButtonBehavior, Image):
         for tool in self.get_widgets('tools'):
             if tool.id == widget.id:
                 if value == 'down' and tool.id == 'brush':
-                    self.color = [79, 54, 54, 1]
+                    self.color = [0.345, 0.345, 0.345, 1]
                     self.screen.brush_color = DrawingApp.colors[self.colors_selector.text]
                 elif value == 'down' and tool.id == 'eraser':
-                    self.color = [1, 0, 0, 1]
+                    self.color = [0.345, 0.345, 0.345, 1]
                     self.screen.brush_color = (1, 1, 1)
                 else:
                     self.color = [1, 1, 1, 1]
@@ -88,14 +88,21 @@ class DrawingApp(App):
             set_brush_size)
 
         controls_layout.add_widget(
-            IconButton(id="brush", source="res/brush.png", group="tools", state="down", allow_no_selection=False,
-                       screen=screen, colors_selector=colors_selector, size_selector=size_selector))
+            IconButton(size_hint=(None, None),
+                       size=(40, 40),
+                       pos_hint={'center_x': .45, 'center_y': .45}, id="brush", source="res/brush.png", group="tools",
+                       state="down", allow_no_selection=False,
+                       screen=screen, colors_selector=colors_selector, size_selector=size_selector), )
         controls_layout.add_widget(
-            IconButton(id="eraser", source="res/eraser.png", group="tools", allow_no_selection=False, screen=screen,
+            IconButton(size_hint=(None, None),
+                       size=(40, 40),
+                       pos_hint={'center_x': .45, 'center_y': .45}, id="eraser", source="res/eraser.png", group="tools",
+                       allow_no_selection=False, screen=screen,
                        colors_selector=colors_selector,
                        size_selector=size_selector))
 
-        clear_button = Button(text="Clear", size=(100, 44))
+        clear_button = Button(text="Clear",
+                              pos_hint={'center_x': .5, 'center_y': .5})
         clear_button.bind(on_press=lambda x: screen.canvas.clear())
 
         controls_layout.add_widget(clear_button)
@@ -111,8 +118,6 @@ class DrawingApp(App):
         spinner = Spinner(
             text=initial_text,
             values=values_list,
-            size_hint=(None, None),
-            size=(100, 44),
             pos_hint={'center_x': .5, 'center_y': .5})
 
         spinner.bind(text=func)
