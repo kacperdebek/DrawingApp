@@ -1,6 +1,7 @@
 from kivy.app import App
 from kivy.graphics import *
 from kivy.uix.behaviors import ButtonBehavior, ToggleButtonBehavior
+from kivy.uix.button import Button
 from kivy.uix.image import Image
 from kivy.uix.spinner import Spinner
 from kivy.uix.stencilview import StencilView
@@ -51,14 +52,13 @@ class IconButton(ToggleButtonBehavior, Image):
         for tool in self.get_widgets('tools'):
             if tool.id == widget.id:
                 if value == 'down' and tool.id == 'brush':
-                    self.color = [1, 0, 0, 1]
+                    self.color = [79, 54, 54, 1]
                     self.screen.brush_color = DrawingApp.colors[self.colors_selector.text]
                 elif value == 'down' and tool.id == 'eraser':
                     self.color = [1, 0, 0, 1]
                     self.screen.brush_color = (1, 1, 1)
                 else:
                     self.color = [1, 1, 1, 1]
-                    print(f"up {tool.id}")
 
 
 class DrawingApp(App):
@@ -73,14 +73,14 @@ class DrawingApp(App):
             if screen.brush_color != (1, 1, 1):
                 screen.brush_color = self.colors[text]
 
+        def set_brush_size(spinner, text):
+            screen.brush_size = int(text)
+
         colors_selector = self.build_spinner(
             "Black",
             tuple([color for color in self.colors]),
             set_brush_color
         )
-
-        def set_brush_size(spinner, text):
-            screen.brush_size = int(text)
 
         size_selector = self.build_spinner(
             "5",
@@ -94,6 +94,11 @@ class DrawingApp(App):
             IconButton(id="eraser", source="res/eraser.png", group="tools", allow_no_selection=False, screen=screen,
                        colors_selector=colors_selector,
                        size_selector=size_selector))
+
+        clear_button = Button(text="Clear", size=(100, 44))
+        clear_button.bind(on_press=lambda x: screen.canvas.clear())
+
+        controls_layout.add_widget(clear_button)
         controls_layout.add_widget(colors_selector)
         controls_layout.add_widget(size_selector)
 
