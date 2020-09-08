@@ -41,14 +41,24 @@ class DrawingSpace(StencilView):
 
 
 class IconButton(ToggleButtonBehavior, Image):
-    def __init__(self, **kwargs):
+    def __init__(self, screen, colors_selector=None, size_selector=None, **kwargs):
+        self.screen = screen
+        self.colors_selector = colors_selector
+        self.size_selector = size_selector
         super(IconButton, self).__init__(**kwargs)
 
     def on_state(self, widget, value):
-        if value == 'down':
-            self.color = [1, 0, 0, 1]
-        else:
-            self.color = [1, 1, 0, 1]
+        for tool in self.get_widgets('tools'):
+            if tool.id == widget.id:
+                if value == 'down' and tool.id == 'brush':
+                    self.color = [1, 0, 0, 1]
+                    self.screen.brush_color = DrawingApp.colors[self.colors_selector.text]
+                elif value == 'down' and tool.id == 'eraser':
+                    self.color = [1, 0, 0, 1]
+                    self.screen.brush_color = (1, 1, 1)
+                else:
+                    self.color = [1, 1, 1, 1]
+                    print(f"up {tool.id}")
 
 
 class DrawingApp(App):
@@ -56,14 +66,34 @@ class DrawingApp(App):
 
     def build(self):
         main_layout = BoxLayout(spacing=10, orientation='vertical')
-        controls_layout = BoxLayout(spacing=5, orientation='horizontal', size_hint=(1, .07))
+        controls_layout = BoxLayout(spacing=1, orientation='horizontal', size_hint=(1, .07))
         screen = DrawingSpace(size_hint=(1, 1))
 
-        colors_selector = self.build_color_dropdown(screen)
-        size_selector = self.build_size_dropdown(screen)
+        def set_brush_color(spinner, text):
+            if screen.brush_color != (1, 1, 1):
+                screen.brush_color = self.colors[text]
 
-        controls_layout.add_widget(IconButton(source="res/brush.png", group="tools"))
-        controls_layout.add_widget(IconButton(source="res/eraser.png", group="tools"))
+        colors_selector = self.build_spinner(
+            "Black",
+            tuple([color for color in self.colors]),
+            set_brush_color
+        )
+
+        def set_brush_size(spinner, text):
+            screen.brush_size = int(text)
+
+        size_selector = self.build_spinner(
+            "5",
+            tuple([str(i) for i in range(1, 11)]),
+            set_brush_size)
+
+        controls_layout.add_widget(
+            IconButton(id="brush", source="res/brush.png", group="tools", state="down", allow_no_selection=False,
+                       screen=screen, colors_selector=colors_selector, size_selector=size_selector))
+        controls_layout.add_widget(
+            IconButton(id="eraser", source="res/eraser.png", group="tools", allow_no_selection=False, screen=screen,
+                       colors_selector=colors_selector,
+                       size_selector=size_selector))
         controls_layout.add_widget(colors_selector)
         controls_layout.add_widget(size_selector)
 
@@ -72,32 +102,15 @@ class DrawingApp(App):
 
         return main_layout
 
-    def build_size_dropdown(self, screen):
+    def build_spinner(self, initial_text, values_list, func):
         spinner = Spinner(
-            text='5',
-            values=tuple([str(i) for i in range(1, 11)]),
+            text=initial_text,
+            values=values_list,
             size_hint=(None, None),
             size=(100, 44),
             pos_hint={'center_x': .5, 'center_y': .5})
 
-        def show_selected_value(spinner, text):
-            screen.brush_size = int(text)
-
-        spinner.bind(text=show_selected_value)
-        return spinner
-
-    def build_color_dropdown(self, screen):
-        spinner = Spinner(
-            text='Black',
-            values=tuple([color for color in self.colors]),
-            size_hint=(None, None),
-            size=(100, 44),
-            pos_hint={'center_x': .5, 'center_y': .5})
-
-        def show_selected_value(spinner, text):
-            screen.brush_color = self.colors[text]
-
-        spinner.bind(text=show_selected_value)
+        spinner.bind(text=func)
         return spinner
 
 
