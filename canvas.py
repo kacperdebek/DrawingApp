@@ -24,6 +24,7 @@ class DrawingSpace(StencilView):
         if super(DrawingSpace, self).on_touch_move(touch):
             return True
         if not self.collide_point(touch.x, touch.y):
+            self._prev_x, self._prev_y = None, None
             return False
         if self._prev_x and self._prev_y:
             with self.canvas:
@@ -62,7 +63,8 @@ class IconButton(ToggleButtonBehavior, Image):
 
 
 class DrawingApp(App):
-    colors = {'Red': (1, 0, 0), 'Blue': (0, 0, 1), 'Green': (0, 1, 0), 'Black': (0, 0, 0)}
+    colors = {'Red': (1, 0, 0), 'Blue': (0, 0, 1), 'Green': (0, 1, 0), 'Black': (0, 0, 0), 'Yellow': (1, 1, 0),
+              'Magenta': (1, 0, 1), 'Cyan': (0, 1, 1)}
 
     def build(self):
         main_layout = BoxLayout(spacing=10, orientation='vertical')
@@ -74,7 +76,7 @@ class DrawingApp(App):
                 screen.brush_color = self.colors[text]
 
         def set_brush_size(spinner, text):
-            screen.brush_size = int(text)
+            screen.brush_size = int(text.split(' ')[1])
 
         colors_selector = self.build_spinner(
             "Black",
@@ -83,23 +85,21 @@ class DrawingApp(App):
         )
 
         size_selector = self.build_spinner(
-            "5",
-            tuple([str(i) for i in range(1, 11)]),
+            "Size: 5",
+            tuple(["Size: " + str(i) for i in range(1, 21)]),
             set_brush_size)
 
         controls_layout.add_widget(
-            IconButton(size_hint=(None, None),
-                       size=(40, 40),
-                       pos_hint={'center_x': .45, 'center_y': .45}, id="brush", source="res/brush.png", group="tools",
-                       state="down", allow_no_selection=False,
-                       screen=screen, colors_selector=colors_selector, size_selector=size_selector), )
+            IconButton(
+                pos_hint={'center_x': .45, 'center_y': .45}, id="brush", source="res/brush.png", group="tools",
+                state="down", allow_no_selection=False,
+                screen=screen, colors_selector=colors_selector, size_selector=size_selector), )
         controls_layout.add_widget(
-            IconButton(size_hint=(None, None),
-                       size=(40, 40),
-                       pos_hint={'center_x': .45, 'center_y': .45}, id="eraser", source="res/eraser.png", group="tools",
-                       allow_no_selection=False, screen=screen,
-                       colors_selector=colors_selector,
-                       size_selector=size_selector))
+            IconButton(
+                pos_hint={'center_x': .45, 'center_y': .45}, id="eraser", source="res/eraser.png", group="tools",
+                allow_no_selection=False, screen=screen,
+                colors_selector=colors_selector,
+                size_selector=size_selector))
 
         clear_button = Button(text="Clear",
                               pos_hint={'center_x': .5, 'center_y': .5})
